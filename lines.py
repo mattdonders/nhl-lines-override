@@ -48,6 +48,37 @@ class LinesForm(Form):
 
 # ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
+# NHL Score & Parsing Methods
+# ------------------------------------------------------------------------------
+
+def get_all_teams():
+    teams_url = f'{NHL_API_BASE}/teams?expand=team.stats,team.roster'
+    try:
+        logging.info("Sending All Teams API Request - %s", teams_url)
+        all_teams = requests.get(teams_url).json()
+    except requests.exceptions.RequestException:
+        logging.error('Unable to get team information.')
+
+    return all_teams['teams']
+
+
+def generate_roster_team_dict(all_teams):
+    roster_dict = dict()
+    for team in all_teams:
+        team_id = team['id']
+        players = team['roster']['roster']
+        for player in players:
+            player_name = player['person']['fullName'].upper()
+            player_id = player['person']['id']
+            roster_dict[player_name] = dict()
+            roster_dict[player_name]['team'] = team_id
+            roster_dict[player_name]['id'] = player_id
+
+    return roster_dict
+
+
+# ------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # File System Methods
 # ------------------------------------------------------------------------------
 
@@ -103,6 +134,7 @@ def lines_form():
 
 @app.route("/updatelines", methods=['POST'])
 def update_lines():
+    player_error = False
     form = LinesForm(request.form)
 
     if request.method == 'POST':
@@ -114,6 +146,15 @@ def update_lines():
             key = f'{line}{position}'
             # print(fieldname, key, value)
             confirmed_lines[key] = value
+
+        for position, player in confirmed_lines.items():
+            try:
+                player_id = roster_dict[player.upper()]
+                print(player, player_id)
+            except KeyError:
+                player_error = True
+                flash(f'{player} is in invalid NHL player.', 'error')
+                return redirect(url_for('lines_form'))
 
         print(f'Confirmed Lines: {confirmed_lines}')
         writeLinesFile(confirmed_lines)
@@ -143,5 +184,10 @@ def get_lines():
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG, datefmt='%Y-%m-%d %H:%M:%S',
+                        format='%(asctime)s - %(module)s.%(funcName)s (%(lineno)d) - %(levelname)s - %(message)s')
 
+    # Generate Roster Dictionary (for player name validation)
+    all_teams = get_all_teams()
+    roster_dict = generate_roster_team_dict(all_teams)
     app.run('0.0.0.0')
