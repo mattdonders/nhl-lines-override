@@ -9,6 +9,21 @@
   <title>Reusable Form Demo</title>
   <link rel="stylesheet" media="screen" href="{{ url_for('static',filename='bootstrap.min.css') }}">
   <link rel="stylesheet" href="{{ url_for('static',filename='bootstrap-theme.min.css') }}">
+
+  <style type="text/css" media="screen">
+    .form-control {
+      font-size: 1.5vmax;
+      text-align: center;
+    }
+    .form-group {
+      padding-left: 7px;
+      padding-right: 7px;
+    }
+    .btn {
+      padding-left: 7px;
+      padding-right: 7px;
+    }
+  </style>
 </head>
 
 <body>
@@ -38,7 +53,7 @@
     {% endwith %}
 
     {% from "_formhelpers.html" import render_field %}
-    <form action="" method="post" role="form">
+    <form action="{{url_for('update_lines')}}" method="post" role="form">
       {{ form.csrf }}
 
       <!-- LINE #1 -->
@@ -123,7 +138,13 @@
         </div>
       </div>
 
-      <button type="submit" class="btn btn-success">Confirm Lineup</button>
+
+      <!--<div class="row" style="text-align: center;">
+        <strong>Last Lineup Confirmation: {{ filetime }}</strong>
+      </div>-->
+
+      <button type="submit" class="btn btn-success btn-lg btn-block">Confirm Lineup</button>
+
     </form>
 
     <!-- Fill the Form Dynamically -->
