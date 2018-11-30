@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Reusable Form Demo</title>
+  <link rel="stylesheet" media="screen" href="{{ url_for('static',filename='bootstrap.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static',filename='bootstrap-theme.min.css') }}">
+</head>
+
+<body>
+  <div class="container">
+    <div class="page-header">
+      <h1>NHL Twitter Bot - Lines Override</h1>
+      <p class="lead">
+        Used with <a href="#">NHL Twitter Bot</a> to override lines if not set externally.
+      </p>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+
+    {% for category, message in messages %}
+    {% if category == 'success' %}
+    <div class="alert alert-success">
+      <strong>Success:</strong> {{ message }}
+    </div>
+    {% elif category == 'error' %}
+    <div class="alert alert-warning">
+      <strong>Error:</strong> {{ message }}
+    </div>
+    {% endif %}
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    {% from "_formhelpers.html" import render_field %}
+    <form action="" method="post" role="form">
+      {{ form.csrf }}
+
+      <!-- LINE #1 -->
+      <div class="row">
+        <div class="form-group col-xs-4 col-sm-4 col-md-4 col-lg-4">
+          {{ form.LW1(class="form-control", value=lines['1LW']) }}
+        </div>
+        <div class="form-group col-xs-4 col-sm-4 col-md-4 col-lg-4">
+          {{ form.C1(class="form-control", value=lines['1C']) }}
+        </div>
+        <div class="form-group col-xs-4 col-sm-4 col-md-4 col-lg-4">
+          {{ form.RW1(class="form-control", value=lines['1RW']) }}
+        </div>
+      </div>
+
+      <!-- LINE #2 -->
+      <div class="row">
+        <div class="form-group col-xs-4 col-sm-4 col-md-4 col-lg-4">
+          {{ form.LW2(class="form-control", value=lines['2LW']) }}
+        </div>
+        <div class="form-group col-xs-4 col-sm-4 col-md-4 col-lg-4">
+          {{ form.C2(class="form-control", value=lines['2C']) }}
+        </div>
+        <div class="form-group col-xs-4 col-sm-4 col-md-4 col-lg-4">
+          {{ form.RW2(class="form-control", value=lines['2RW']) }}
+        </div>
+      </div>
+
+      <!-- LINE #3 -->
+      <div class="row">
+        <div class="form-group col-xs-4 col-sm-4 col-md-4 col-lg-4">
+          {{ form.LW3(class="form-control", value=lines['3LW']) }}
+        </div>
+        <div class="form-group col-xs-4 col-sm-4 col-md-4 col-lg-4">
+          {{ form.C3(class="form-control", value=lines['3C']) }}
+        </div>
+        <div class="form-group col-xs-4 col-sm-4 col-md-4 col-lg-4">
+          {{ form.RW3(class="form-control", value=lines['3RW']) }}
+        </div>
+      </div>
+
+      <!-- LINE #4 -->
+      <div class="row">
+        <div class="form-group col-xs-4 col-sm-4 col-md-4 col-lg-4">
+          {{ form.LW4(class="form-control", value=lines['4LW']) }}
+        </div>
+        <div class="form-group col-xs-4 col-sm-4 col-md-4 col-lg-4">
+          {{ form.C4(class="form-control", value=lines['4C']) }}
+        </div>
+        <div class="form-group col-xs-4 col-sm-4 col-md-4 col-lg-4">
+          {{ form.RW4(class="form-control", value=lines['4RW']) }}
+        </div>
+      </div>
+
+      <!-- PAIRING #1 -->
+      <div class="row">
+        <div class="form-group col-xs-6 col-sm-6 col-md-6 col-lg-6">
+          {{ form.LD1(class="form-control", value=lines['1LD']) }}
+        </div>
+        <div class="form-group col-xs-6 col-sm-6 col-md-6 col-lg-6">
+          {{ form.RD1(class="form-control", value=lines['1RD']) }}
+        </div>
+      </div>
+
+      <!-- PAIRING #2 -->
+      <div class="row">
+        <div class="form-group col-xs-6 col-sm-6 col-md-6 col-lg-6">
+          {{ form.LD2(class="form-control", value=lines['2LD']) }}
+        </div>
+        <div class="form-group col-xs-6 col-sm-6 col-md-6 col-lg-6">
+          {{ form.RD2(class="form-control", value=lines['2RD']) }}
+        </div>
+      </div>
+
+      <!-- PAIRING #3 -->
+      <div class="row">
+        <div class="form-group col-xs-6 col-sm-6 col-md-6 col-lg-6">
+          {{ form.LD3(class="form-control", value=lines['3LD']) }}
+        </div>
+        <div class="form-group col-xs-6 col-sm-6 col-md-6 col-lg-6">
+          {{ form.RD3(class="form-control", value=lines['3RD']) }}
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-success">Confirm Lineup</button>
+    </form>
+
+    <!-- Fill the Form Dynamically -->
+
+    <br>
+
+  </div>
+</body>
+
+</html>
