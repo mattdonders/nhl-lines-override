@@ -16,12 +16,16 @@
       text-align: center;
     }
     .form-group {
-      padding-left: 7px;
-      padding-right: 7px;
+      padding-left: 5px;
+      padding-right: 5px;
     }
     .btn {
       padding-left: 7px;
       padding-right: 7px;
+    }
+    .row {
+      padding-left: 10px;
+      padding-right: 10px;
     }
   </style>
 </head>
@@ -140,7 +144,7 @@
 
 
       <!--<div class="row" style="text-align: center;">
-        <strong>Last Lineup Confirmation: {{ filetime }}</strong>
+        <strong>Last Lineup Confirmation: {{ confirmed['confirmed_datetime'] }}</strong>
       </div>-->
 
       <button type="submit" class="btn btn-success btn-lg btn-block">Confirm Lineup</button>

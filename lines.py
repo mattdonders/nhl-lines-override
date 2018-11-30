@@ -1,13 +1,23 @@
+"""
+This module serves as a front-end to the Lines Override function
+of the NHL Twitter Bot. Also does validation of player names.
+"""
+
 import json
+import logging
 import os
 from datetime import datetime
 
-from flask import Flask, flash, render_template, request, redirect, url_for
+import requests
+from flask import (Flask, flash, jsonify, redirect, render_template, request,
+                   url_for)
 from wtforms import Form, StringField, SubmitField, TextAreaField, validators
 
 PROJECT_ROOT = os.path.dirname(os.path.realpath(__file__))
 PROJECT_ROOT_1LVL = os.path.dirname(PROJECT_ROOT)
 LINES_FILE = os.path.join(PROJECT_ROOT_1LVL, 'nhl-twitter-bot', 'localdata', 'lines-override.json')
+
+NHL_API_BASE = 'http://statsapi.web.nhl.com/api/v1'
 
 # Flask Application Config
 # DEBUG = True
@@ -34,6 +44,12 @@ class LinesForm(Form):
     RD2 = StringField('RD2', [validators.DataRequired()], render_kw={"placeholder": "Right Defense #2"})
     LD3 = StringField('LD3', [validators.DataRequired()], render_kw={"placeholder": "Left Defense #3"})
     RD3 = StringField('RD3', [validators.DataRequired()], render_kw={"placeholder": "Right Defense #3"})
+
+
+# ------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# File System Methods
+# ------------------------------------------------------------------------------
 
 def readLinesFile():
     try:
@@ -63,18 +79,26 @@ def writeLinesFile(lines):
         json.dump(lines, f)
 
 
+# ------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# Flask Routes
+# ------------------------------------------------------------------------------
+
 @app.route("/", methods=['GET'])
 def lines_form():
     form = LinesForm(request.form)
 
-    lines, filetime = readLinesFile()
-    print(f'Lines from File: {lines}')
+    # API Driven Development
+    lines_dict = get_lines().get_json()
+    lines = lines_dict['lines']
 
-    # Convert Filetime to String Format
-    # filetime = datetime.fromtimestamp(filetime).strftime('%Y-%m-%d %H:%M:%S')
-    filetime = datetime.fromtimestamp(filetime).strftime('%m-%d-%Y %H:%M%p')
+    confirmed = dict(lines_dict)
+    confirmed.pop('lines')
 
-    return render_template('lines.html', form=form, lines=lines, filetime=filetime)
+    print(lines)
+    print(confirmed)
+
+    return render_template('lines.html', form=form, lines=lines, confirmed=confirmed)
 
 
 @app.route("/updatelines", methods=['POST'])
@@ -101,5 +125,23 @@ def update_lines():
 
     return redirect(url_for('lines_form'))
 
+
+@app.route("/getlines", methods=['GET'])
+def get_lines():
+    lines, filetime = readLinesFile()
+
+    confirmed_datetime = datetime.fromtimestamp(filetime)
+    confirmed_today = bool(confirmed_datetime.date() == datetime.today().date())
+    confirmed_str = confirmed_datetime.strftime('%Y-%m-%d %H:%M%p')
+
+    return_dict = dict()
+    return_dict['confirmed'] = confirmed_today
+    return_dict['confirmed_datetime'] = confirmed_str
+    return_dict['lines'] = lines
+
+    return jsonify(return_dict)
+
+
 if __name__ == "__main__":
+
     app.run('0.0.0.0')
