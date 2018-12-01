@@ -9,6 +9,7 @@ import os
 from datetime import datetime
 
 import requests
+from dateutil.parser import parse
 from flask import (Flask, flash, jsonify, redirect, render_template, request,
                    url_for)
 from wtforms import Form, StringField, SubmitField, TextAreaField, validators
@@ -18,6 +19,7 @@ PROJECT_ROOT_1LVL = os.path.dirname(PROJECT_ROOT)
 LINES_FILE = os.path.join(PROJECT_ROOT_1LVL, 'nhl-twitter-bot', 'localdata', 'lines-override.json')
 
 NHL_API_BASE = 'http://statsapi.web.nhl.com/api/v1'
+NHL_API_BASEONLY = 'http://statsapi.web.nhl.com'
 
 # Flask Application Config
 # DEBUG = True
@@ -55,11 +57,13 @@ def get_all_teams():
     teams_url = f'{NHL_API_BASE}/teams?expand=team.stats,team.roster'
     try:
         logging.info("Sending All Teams API Request - %s", teams_url)
-        all_teams = requests.get(teams_url).json()
+        all_teams = requests.get(teams_url)
+        all_teams_date = parse(all_teams.headers['Date'])
+        all_teams_json = all_teams.json()
     except requests.exceptions.RequestException:
         logging.error('Unable to get team information.')
 
-    return all_teams['teams']
+    return (all_teams_json['teams'], all_teams_date)
 
 
 def generate_roster_team_dict(all_teams):
@@ -147,14 +151,28 @@ def update_lines():
             # print(fieldname, key, value)
             confirmed_lines[key] = value
 
+        # Check if a player exists and if all players are on the same team
         for position, player in confirmed_lines.items():
             try:
-                player_id = roster_dict[player.upper()]
-                print(player, player_id)
+                player_id = roster_dict[player.upper()]['id']
+                player_team = roster_dict[player.upper()]['team']
             except KeyError:
-                player_error = True
-                flash(f'{player} is in invalid NHL player.', 'error')
-                return redirect(url_for('lines_form'))
+                # Sometimes a player is an AHL call-up & not on NHL Roster Page
+                logging.info('%s is not on the master roster - check live feed for verification.', player)
+                lookup_position = '1C' if position != '1C' else '2C'
+                lookup_player = confirmed_lines[lookup_position]
+                lookup_team = roster_dict[lookup_player.upper()]['team']
+
+                schedule = f'https://statsapi.web.nhl.com/api/v1/schedule?teamId={lookup_team}'
+                logging.info('Getting Schedule via API - %s', schedule)
+                schedule_json = requests.get(schedule).json()
+                live_feed = schedule_json['dates'][0]['games'][0]['link']
+                live_feed_url = f'{NHL_API_BASEONLY}{live_feed}'
+                logging.info('Getting Live Feed via API - %s', live_feed_url)
+                live_feed_resp = requests.get(live_feed_url).text
+                if player not in live_feed_resp:
+                    flash(f'{player} is in invalid NHL player.', 'error')
+                    return redirect(url_for('lines_form'))
 
         print(f'Confirmed Lines: {confirmed_lines}')
         writeLinesFile(confirmed_lines)
@@ -184,10 +202,10 @@ def get_lines():
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG, datefmt='%Y-%m-%d %H:%M:%S',
+    logging.basicConfig(level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S',
                         format='%(asctime)s - %(module)s.%(funcName)s (%(lineno)d) - %(levelname)s - %(message)s')
 
     # Generate Roster Dictionary (for player name validation)
-    all_teams = get_all_teams()
+    all_teams, all_teams_date = get_all_teams()
     roster_dict = generate_roster_team_dict(all_teams)
     app.run('0.0.0.0')
